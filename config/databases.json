@@ -1,0 +1,43 @@
+{
+  "databases": [
+    {
+      "id": "db_payroll",
+      "name": "Payroll Database",
+      "type": "sqlserver",
+      "host": "localhost",
+      "port": 1433,
+      "database": "payroll_db",
+      "description": "PT Rebinmas Payroll Daftar Upah System",
+      "enabled": true
+    },
+    {
+      "id": "db_attendance",
+      "name": "Attendance Database", 
+      "type": "mysql",
+      "host": "localhost",
+      "port": 3306,
+      "database": "attendance_db",
+      "description": "Employee Attendance & Presence Tracking",
+      "enabled": true
+    },
+    {
+      "id": "db_project",
+      "name": "Project Management Database",
+      "type": "postgresql", 
+      "host": "localhost",
+      "port": 5432,
+      "database": "project_db",
+      "description": "Project Management & Task Tracking",
+      "enabled": true
+    }
+  ],
+  "embedder": {
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "dimensions": 1536
+  },
+  "storage": {
+    "type": "file",
+    "path": "./knowledgebases"
+  }
+}

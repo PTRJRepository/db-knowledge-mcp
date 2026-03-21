@@ -1,0 +1,37 @@
+{
+  "name": "db-knowledge-mcp",
+  "version": "1.0.0",
+  "description": "Enterprise Database Schema Knowledge Base - Reads database metadata and stores as searchable vector knowledge for AI agents",
+  "main": "dist/mcp-server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/mcp-server.js",
+    "dev": "tsc && node dist/mcp-server.js",
+    "scan-all": "tsc && node dist/scripts/scan-all.js"
+  },
+  "keywords": [
+    "mcp",
+    "database",
+    "knowledge-base",
+    "vector-store",
+    "enterprise",
+    "schema"
+  ],
+  "author": "attapangestu",
+  "license": "MIT",
+  "dependencies": {
+    "fastmcp": "^1.0.0",
+    "mssql": "^10.0.0",
+    "mysql2": "^3.9.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/mssql": "^9.1.9",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
