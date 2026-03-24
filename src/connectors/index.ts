@@ -1,14 +1,12 @@
-import { BaseDatabaseConnector, DatabaseConfig } from './base';
+import { BaseDatabaseConnector, DatabaseConfig, TableInfo, ColumnInfo, ForeignKeyInfo, IndexInfo, DatabaseSchema } from './base';
 import { SQLServerConnector } from './sqlserver';
 import { MySQLConnector } from './mysql';
 import { PostgreSQLConnector } from './postgresql';
 
-export { BaseDatabaseConnector, DatabaseConfig } from './base';
+export { BaseDatabaseConnector, DatabaseConfig, TableInfo, ColumnInfo, ForeignKeyInfo, IndexInfo, DatabaseSchema } from './base';
 export { SQLServerConnector } from './sqlserver';
 export { MySQLConnector } from './mysql';
 export { PostgreSQLConnector } from './postgresql';
-
-export type DatabaseType = 'sqlserver' | 'mysql' | 'postgresql';
 
 export function createConnector(config: DatabaseConfig): BaseDatabaseConnector {
   switch (config.type) {
@@ -21,8 +19,4 @@ export function createConnector(config: DatabaseConfig): BaseDatabaseConnector {
     default:
       throw new Error(`Unsupported database type: ${config.type}`);
   }
-}
-
-export function getSupportedDatabases(): DatabaseType[] {
-  return ['sqlserver', 'mysql', 'postgresql'];
 }

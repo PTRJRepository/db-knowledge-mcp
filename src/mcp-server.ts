@@ -2,7 +2,7 @@ import { FastMCP } from 'fastmcp';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
-import { createConnector, DatabaseConfig } from './connectors';
+import { createConnector, DatabaseConfig } from './connectors/index';
 import { SchemaEmbedder } from './embedder/schema-embedder';
 import { VectorStore, KnowledgeBase, SearchResult } from './storage/vector-store';
 
@@ -319,10 +319,6 @@ mcp.addTool({
   }
 });
 
-export function startServer() {
-  vectorStore.initialize();
-  mcp.start({ transportType: 'stdio' });
-  console.log('DB Knowledge MCP Server started');
-}
-
-startServer();
+vectorStore.initialize();
+mcp.start({ transportType: 'stdio' });
+console.log('DB Knowledge MCP Server started');

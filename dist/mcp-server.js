@@ -3,12 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startServer = startServer;
 const fastmcp_1 = require("fastmcp");
 const zod_1 = require("zod");
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
-const connectors_1 = require("./connectors");
+const index_1 = require("./connectors/index");
 const schema_embedder_1 = require("./embedder/schema-embedder");
 const vector_store_1 = require("./storage/vector-store");
 const CONFIG_PATH = path_1.default.join(process.cwd(), 'config', 'databases.json');
@@ -106,7 +105,7 @@ mcp.addTool({
         if (!dbConfig.enabled) {
             return { content: [{ type: 'text', text: `Database is disabled: ${databaseId}` }], isError: true };
         }
-        const connector = (0, connectors_1.createConnector)(dbConfig);
+        const connector = (0, index_1.createConnector)(dbConfig);
         try {
             const schema = await connector.getFullSchema();
             const embeddingResult = await embedder.embedSchema(schema);
@@ -256,7 +255,7 @@ mcp.addTool({
         if (!dbConfig) {
             return { content: [{ type: 'text', text: `Database not found: ${databaseId}` }] };
         }
-        const connector = (0, connectors_1.createConnector)(dbConfig);
+        const connector = (0, index_1.createConnector)(dbConfig);
         try {
             const connected = await connector.testConnection();
             return {
@@ -273,10 +272,7 @@ mcp.addTool({
         }
     }
 });
-function startServer() {
-    vectorStore.initialize();
-    mcp.start({ transportType: 'stdio' });
-    console.log('DB Knowledge MCP Server started');
-}
-startServer();
+vectorStore.initialize();
+mcp.start({ transportType: 'stdio' });
+console.log('DB Knowledge MCP Server started');
 //# sourceMappingURL=mcp-server.js.map

@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostgreSQLConnector = exports.MySQLConnector = exports.SQLServerConnector = exports.BaseDatabaseConnector = void 0;
 exports.createConnector = createConnector;
-exports.getSupportedDatabases = getSupportedDatabases;
 const sqlserver_1 = require("./sqlserver");
 const mysql_1 = require("./mysql");
 const postgresql_1 = require("./postgresql");
@@ -25,8 +24,5 @@ function createConnector(config) {
         default:
             throw new Error(`Unsupported database type: ${config.type}`);
     }
-}
-function getSupportedDatabases() {
-    return ['sqlserver', 'mysql', 'postgresql'];
 }
 //# sourceMappingURL=index.js.map

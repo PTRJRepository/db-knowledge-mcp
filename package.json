@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/mcp-server.js",
+    "start:combined": "node dist/server.js",
     "dev": "tsc && node dist/mcp-server.js",
+    "dev:combined": "tsc && node dist/server.js",
     "scan-all": "tsc && node dist/scripts/scan-all.js"
   },
   "keywords": [
@@ -20,12 +22,22 @@
   "author": "attapangestu",
   "license": "MIT",
   "dependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "fastmcp": "^1.0.0",
     "mssql": "^10.0.0",
     "mysql2": "^3.9.0",
-    "pg": "^8.11.0"
+    "pg": "^8.11.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "vis-data": "^8.0.3",
+    "vis-network": "^10.0.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/mssql": "^9.1.9",
     "@types/node": "^20.0.0",
     "@types/pg": "^8.11.0",

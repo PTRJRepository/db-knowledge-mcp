@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DB Knowledge Graph</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://unpkg.com/vis-data/standalone/umd/vis-data.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #eee; }
+    #app { display: flex; height: 100vh; }
+    #sidebar { width: 320px; background: #16213e; padding: 20px; overflow-y: auto; border-right: 1px solid #0f3460; }
+    #graph { flex: 1; }
+    .header { margin-bottom: 20px; }
+    .header h1 { font-size: 1.5rem; color: #00d9ff; margin-bottom: 5px; }
+    .header p { font-size: 0.85rem; color: #888; }
+    .db-selector { margin-bottom: 20px; }
+    .db-selector label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+    .db-selector select { width: 100%; padding: 10px; background: #0f3460; border: 1px solid #1a4a7a; color: #fff; border-radius: 6px; font-size: 0.9rem; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat { background: #0f3460; padding: 12px; border-radius: 8px; text-align: center; }
+    .stat-value { font-size: 1.5rem; font-weight: bold; color: #00d9ff; }
+    .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; margin-top: 4px; }
+    .search { margin-bottom: 15px; }
+    .search input { width: 100%; padding: 10px; background: #0f3460; border: 1px solid #1a4a7a; color: #fff; border-radius: 6px; font-size: 0.9rem; }
+    .legend { margin-bottom: 15px; }
+    .legend h3 { font-size: 0.75rem; color: #888; text-transform: uppercase; margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.85rem; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+    #detail { flex: 1; background: #16213e; padding: 20px; overflow-y: auto; border-left: 1px solid #0f3460; display: none; }
+    #detail.active { display: block; }
+    .detail-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
+    .detail-header h2 { font-size: 1.3rem; color: #00d9ff; }
+    .close-btn { background: #e94560; border: none; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section h3 { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #0f3460; padding-bottom: 5px; }
+    .detail-section p { font-size: 0.9rem; line-height: 1.6; color: #ccc; margin-bottom: 10px; }
+    .tag { display: inline-block; background: #0f3460; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; margin: 2px; }
+    .tag.table { background: #1a4a7a; color: #00d9ff; }
+    .tag.column { background: #2d5a3d; color: #00ff88; }
+    .tag.relationship { background: #5a2d2d; color: #ff6b6b; }
+    .chunk { background: #0f3460; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+    .chunk-type { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+    .chunk-content { font-size: 0.85rem; line-height: 1.5; margin-top: 5px; }
+    .chunk-meta { font-size: 0.75rem; color: #666; margin-top: 8px; }
+    .loading { text-align: center; padding: 40px; color: #888; }
+    .error { background: #3d1a1a; padding: 15px; border-radius: 6px; color: #ff6b6b; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="sidebar">
+      <div class="header">
+        <h1>DB Knowledge Graph</h1>
+        <p>Enterprise Database Vector Knowledge</p>
+      </div>
+      <div class="db-selector">
+        <label>Select Knowledge Base</label>
+        <select id="dbSelect"><option value="">Loading...</option></select>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-value" id="tableCount">-</div><div class="stat-label">Tables</div></div>
+        <div class="stat"><div class="stat-value" id="chunkCount">-</div><div class="stat-label">Chunks</div></div>
+      </div>
+      <div class="search">
+        <input type="text" id="searchInput" placeholder="Search tables, columns...">
+      </div>
+      <div class="legend">
+        <h3>Legend</h3>
+        <div class="legend-item"><div class="legend-dot" style="background:#00d9ff"></div> Database</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div> Table</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div> Column</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div> Relationship</div>
+      </div>
+    </div>
+    <div id="graph"></div>
+    <div id="detail">
+      <div class="detail-header">
+        <h2 id="detailTitle">Details</h2>
+        <button class="close-btn" onclick="closeDetail()">Close</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+  <script>
+    let network = null;
+    let currentKB = null;
+    let allNodes = [];
+    let allEdges = [];
+    
+    const API_BASE = 'http://localhost:5005';
+    
+    async function loadKnowledgeBases() {
+      try {
+        const res = await fetch(API_BASE + '/api/knowledge-bases');
+        const kbs = await res.json();
+        const select = document.getElementById('dbSelect');
+        select.innerHTML = '<option value="">Select a database...</option>';
+        kbs.forEach(kb => {
+          const opt = document.createElement('option');
+          opt.value = kb.id;
+          opt.textContent = kb.name + ' (' + kb.databaseId + ')';
+          select.appendChild(opt);
+        });
+        if (kbs.length > 0) {
+          select.value = kbs[0].id;
+          loadKB(kbs[0].id);
+        }
+      } catch (e) {
+        document.getElementById('dbSelect').innerHTML = '<option value="">Error loading</option>';
+      }
+    }
+    
+    async function loadKB(kbId) {
+      if (!kbId) return;
+      try {
+        const res = await fetch(API_BASE + '/api/knowledge-bases/' + kbId);
+        currentKB = await res.json();
+        document.getElementById('tableCount').textContent = currentKB.statistics.tables;
+        document.getElementById('chunkCount').textContent = currentKB.statistics.totalChunks;
+        buildGraph(currentKB);
+      } catch (e) {
+        console.error('Error loading KB:', e);
+      }
+    }
+    
+    function buildGraph(kb) {
+      const nodes = [];
+      const edges = [];
+      
+      // Database node
+      nodes.push({ id: 'db_' + kb.databaseId, label: kb.name, group: 'database', title: kb.description, color: '#00d9ff' });
+      
+      // Table nodes
+      const tableChunks = kb.chunks.filter(c => c.chunkType === 'table');
+      tableChunks.forEach((chunk, i) => {
+        const tableId = 'table_' + chunk.metadata.schema + '_' + chunk.metadata.tableName;
+        nodes.push({ id: tableId, label: chunk.metadata.tableName, group: 'table', title: chunk.content, color: '#00ff88' });
+        edges.push({ from: 'db_' + kb.databaseId, to: tableId, color: '#444' });
+      });
+      
+      // Column nodes and relationships
+      const columnChunks = kb.chunks.filter(c => c.chunkType === 'column');
+      columnChunks.forEach((chunk, i) => {
+        const colId = 'col_' + chunk.id;
+        const tableId = 'table_' + chunk.metadata.schema + '_' + chunk.metadata.tableName;
+        nodes.push({ id: colId, label: chunk.metadata.columnName, group: 'column', title: chunk.content, color: '#ffd700' });
+        edges.push({ from: tableId, to: colId, color: '#333' });
+      });
+      
+      // Relationship nodes
+      const relChunks = kb.chunks.filter(c => c.chunkType === 'relationship');
+      relChunks.forEach((chunk, i) => {
+        if (chunk.metadata.fromTable && chunk.metadata.toTable) {
+          const relId = 'rel_' + i;
+          nodes.push({ id: relId, label: 'FK', group: 'relationship', title: chunk.content, color: '#ff6b6b' });
+          edges.push({ from: 'table_' + chunk.metadata.fromTable, to: relId, color: '#662222' });
+          edges.push({ from: relId, to: 'table_' + chunk.metadata.toTable, color: '#662222' });
+        }
+      });
+      
+      allNodes = nodes;
+      allEdges = edges;
+      
+      const container = document.getElementById('graph');
+      const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+      const options = {
+        nodes: { shape: 'dot', size: 16, font: { color: '#eee', size: 12 }, borderWidth: 2 },
+        edges: { width: 1, smooth: { type: 'continuous' } },
+        groups: { database: { color: { background: '#00d9ff', border: '#00a8cc' } }, table: { color: { background: '#00ff88', border: '#00cc6a' } }, column: { color: { background: '#ffd700', border: '#cca700' } }, relationship: { color: { background: '#ff6b6b', border: '#cc5555' } } },
+        physics: { stabilization: { iterations: 100 }, barnesHut: { gravitationalConstant: -2000, springLength: 150 } },
+        interaction: { hover: true, tooltipDelay: 200 }
+      };
+      
+      if (network) network.destroy();
+      network = new vis.Network(container, data, options);
+      
+      network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          showDetail(nodeId, kb);
+        }
+      });
+    }
+    
+    function showDetail(nodeId, kb) {
+      const node = allNodes.find(n => n.id === nodeId);
+      if (!node) return;
+      
+      document.getElementById('detail').classList.add('active');
+      document.getElementById('detailTitle').textContent = node.label;
+      
+      let html = '<div class="detail-section"><h3>Type</h3><span class="tag ' + node.group + '">' + node.group + '</span></div>';
+      
+      if (node.group === 'database') {
+        html += '<div class="detail-section"><h3>Description</h3><p>' + kb.description + '</p></div>';
+        html += '<div class="detail-section"><h3>Statistics</h3><p>Tables: ' + kb.statistics.tables + '<br>Columns: ' + kb.statistics.columns + '<br>Relationships: ' + kb.statistics.relationships + '<br>Total Chunks: ' + kb.statistics.totalChunks + '</p></div>';
+        html += '<div class="detail-section"><h3>Created</h3><p>' + new Date(kb.createdAt).toLocaleString() + '</p></div>';
+      } else if (node.group === 'table') {
+        const chunks = kb.chunks.filter(c => c.metadata.tableName === node.label && c.chunkType === 'table');
+        if (chunks.length > 0) html += '<div class="detail-section"><h3>Description</h3><p>' + chunks[0].content + '</p></div>';
+        html += '<div class="detail-section"><h3>Columns</h3>';
+        kb.chunks.filter(c => c.metadata.tableName === node.label && c.chunkType === 'column').forEach(c => {
+          html += '<span class="tag column">' + c.metadata.columnName + ' (' + c.metadata.dataType + ')</span>';
+        });
+        html += '</div>';
+      } else if (node.group === 'column') {
+        const chunk = kb.chunks.find(c => c.id === nodeId.replace('col_', ''));
+        if (chunk) {
+          html += '<div class="detail-section"><h3>Data Type</h3><p>' + chunk.metadata.dataType + '</p></div>';
+          html += '<div class="detail-section"><h3>Description</h3><p>' + chunk.content + '</p></div>';
+        }
+      } else if (node.group === 'relationship') {
+        const relChunks = kb.chunks.filter(c => c.chunkType === 'relationship');
+        relChunks.forEach(c => { if (c.id === nodeId.replace('rel_', '')) html += '<div class="detail-section"><h3>Description</h3><p>' + c.content + '</p></div>'; });
+      }
+      
+      // Show related chunks
+      html += '<div class="detail-section"><h3>Knowledge Chunks</h3>';
+      const relatedChunks = kb.chunks.filter(c => c.metadata.tableName === node.label || c.id === nodeId.replace('col_', ''));
+      relatedChunks.slice(0, 5).forEach(c => {
+        html += '<div class="chunk"><div class="chunk-type">' + c.chunkType + '</div><div class="chunk-content">' + c.content.substring(0, 200) + '...</div></div>';
+      });
+      html += '</div>';
+      
+      document.getElementById('detailContent').innerHTML = html;
+    }
+    
+    function closeDetail() {
+      document.getElementById('detail').classList.remove('active');
+    }
+    
+    document.getElementById('dbSelect').addEventListener('change', e => loadKB(e.target.value));
+    
+    document.getElementById('searchInput').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      if (!q) { buildGraph(currentKB); return; }
+      const filtered = { ...currentKB, chunks: currentKB.chunks.filter(c => c.content.toLowerCase().includes(q) || (c.metadata.tableName && c.metadata.tableName.toLowerCase().includes(q)) || (c.metadata.columnName && c.metadata.columnName.toLowerCase().includes(q))) };
+      buildGraph(filtered);
+    });
+    
+    loadKnowledgeBases();
+  </script>
+</body>
+</html>
