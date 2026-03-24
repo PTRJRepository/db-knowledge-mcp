@@ -1,157 +1,50 @@
 # DB Knowledge MCP
 
-Enterprise-grade MCP server yang membaca metadata database (SQL Server, MySQL, PostgreSQL) dan menyimpan ke vector knowledge base untuk dibaca cepat oleh AI agent.
+> Enterprise-grade MCP server untuk membaca metadata database dan menyimpan ke vector knowledge base dengan UI graph interaktif (Obsidian-like).
 
-**Repository:** https://github.com/PTRJRepository/db-knowledge-mcp
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)
 
-## Table of Contents
+## 🎯 Overview
 
-- [Overview](#overview)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [UI Dashboard](#ui-dashboard)
-- [Configuration](#configuration)
-- [Tools (MCP)](#tools-mcp)
-- [API Reference](#api-reference)
-- [Architecture](#architecture)
+DB Knowledge MCP membaca metadata database (SQL Server, MySQL, PostgreSQL) dan menyimpannya sebagai vector knowledge base yang bisa dibaca cepat oleh AI agent. Dilengkapi dengan UI graph interaktif seperti Obsidian untuk visualisasi dan eksplorasi relationship antar tabel.
 
----
+## ✨ Features
 
-## Overview
-
-DB Knowledge MCP adalah sistem yang dirancang untuk enterprise yang secara otomatis:
-1. Membaca metadata database (tables, columns, relationships, indexes)
-2. Menyimpan sebagai vector embeddings untuk pencarian cepat
-3. Menyajikan sebagai graph visualization interaktif
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    DB Knowledge MCP                          │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────┐   ┌──────────────┐   ┌────────────────────┐  │
-│  │ Database │   │   Scanner    │   │     Embedder       │  │
-│  │ Connectors   │  (Schema)    │   │  (OpenAI/Local)    │  │
-│  └────┬─────┘   └──────┬───────┘   └─────────┬──────────┘  │
-│       │                │                     │             │
-│       └────────────────┼─────────────────────┘             │
-│                        ▼                                   │
-│              ┌─────────────────┐                           │
-│              │  Vector Store   │                           │
-│              │  (JSON Files)   │                           │
-│              └────────┬────────┘                           │
-│                       │                                    │
-│       ┌───────────────┼────────────────┐                  │
-│       ▼               ▼                ▼                  │
-│  ┌──────────┐   ┌───────────┐   ┌──────────────┐          │
-│  │ MCP Tools│   │ REST API  │   │   UI Graph   │          │
-│  │  (8 tools)   │ (Port 5005)  │ (Vis Network) │          │
-│  └──────────┘   └───────────┘   └──────────────┘          │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Features
-
+### Core Features
 - **Multi-Database Support**: SQL Server, MySQL, PostgreSQL
-- **Zero-Credential Storage**: IP, port, password tidak disimpan di knowledge base
+- **Vector Knowledge Base**: Simpan schema sebagai embedded vectors
 - **8 MCP Tools**: list_databases, scan_database, search_knowledge, dll
-- **REST API**: Full API access di port 5005
-- **UI Graph**: Interactive knowledge graph visualization (Obsidian-like)
-- **Vector Search**: Semantic search menggunakan OpenAI embeddings
-- **Enterprise Ready**: JSON-based storage, TypeScript, comprehensive docs
+- **Semantic Search**: Query natural language ke knowledge base
 
----
+### UI Dashboard (Port 5005)
+- **Interactive Graph**: Vis Network visualization
+- **Clickable Nodes**: Klik node untuk melihat detail
+- **Database Selector**: Switch antar knowledge bases
+- **Real-time Search**: Filter nodes dengan search bar
+- **Zoom & Pan**: Navigasi graph dengan mouse
+- **Drag Nodes**: Atur posisi node sesuka hati
+- **Auto-layout**: Button untuk auto-arrange graph
 
-## Quick Start
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js >= 18.0.0
+- Database credentials (SQL Server, MySQL, atau PostgreSQL)
+
+### Installation
 
 ```bash
-# Clone repository
 git clone https://github.com/PTRJRepository/db-knowledge-mcp.git
 cd db-knowledge-mcp
-
-# Install dependencies
 npm install
-
-# Build
 npm run build
-
-# Configure databases (edit config/databases.json)
-# {
-#   "databases": [
-#     {
-#       "id": "my_db",
-#       "name": "My Database",
-#       "type": "sqlserver",  // sqlserver | mysql | postgresql
-#       "host": "localhost",
-#       "port": 1433,
-#       "database": "mydb",
-#       "username": "user",
-#       "password": "pass",   // NOT stored in knowledge base
-#       "enabled": true
-#     }
-#   ]
-# }
-
-# Start combined server (API + UI on port 5005)
-npm run start:combined
-
-# Or run separately:
-# MCP Server (stdio): npm start
-# REST API only: node dist/server.js
 ```
 
----
+### Configuration
 
-## UI Dashboard
-
-Buka **http://localhost:5005** untuk mengakses UI dashboard.
-
-### Features
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  DB Knowledge Graph                                    [Search...] │
-├────────────┬─────────────────────────────────┬────────────────────┤
-│ SIDEBAR    │                                 │ DETAIL PANEL       │
-│            │     ┌───┐                       │ (appears on click)  │
-│ [DB: ▼]    │    ┌┴───┴┐                      │                    │
-│            │    │ DB  │                      │ Type: Table        │
-│ Tables: 24 │   ┌┴─────┴┐                     │                    │
-│ Chunks: 156│   │ Table │                      │ Columns:           │
-│            │   └─┬───┬─┘                      │ - id (int) PK     │
-│ [Search]   │     │   │                        │ - name (varchar)   │
-│            │  ┌──┐┌──┐┌──┐                    │ - created_at       │
-│ LEGEND     │  │C1││C2││FK│                     │                    │
-│ ● Database │  └──┘└──┘└──┘                    │ Knowledge Chunks:  │
-│ ● Table    │                                 │ [table_desc...]    │
-│ ● Column   │                                 │                    │
-│ ● Relation │                                 │                    │
-└────────────┴─────────────────────────────────┴────────────────────┘
-```
-
-### Interactive Features
-
-| Action | Description |
-|--------|-------------|
-| **Click Node** | Opens detail panel with full information |
-| **Hover Node** | Shows tooltip with preview |
-| **Drag Node** | Reposition nodes manually |
-| **Scroll** | Zoom in/out |
-| **Search Box** | Filter nodes in real-time |
-| **DB Selector** | Switch between knowledge bases |
-
-### Detail Panel
-
-When you click a node, the detail panel shows:
-- **Node Type**: Database, Table, Column, or Relationship
-- **Metadata**: Schema, data type, nullable, etc.
-- **Knowledge Chunks**: Full embedded knowledge about the entity
-- **Relationships**: Connected nodes and edges
-
----
-
-## Configuration
-
-### `config/databases.json`
+Edit `config/databases.json`:
 
 ```json
 {
@@ -165,31 +58,18 @@ When you click a node, the detail panel shows:
       "database": "payroll_db",
       "username": "sa",
       "password": "your_password",
-      "description": "PT Rebinmas Payroll System",
-      "enabled": true
+      "enabled": true,
+      "description": "Production payroll system"
     },
     {
-      "id": "db_attendance",
-      "name": "Attendance Database",
+      "id": "db_hris",
+      "name": "HRIS Database",
       "type": "mysql",
       "host": "localhost",
       "port": 3306,
-      "database": "attendance_db",
+      "database": "hris_db",
       "username": "root",
       "password": "your_password",
-      "description": "Employee Attendance Tracking",
-      "enabled": true
-    },
-    {
-      "id": "db_inventory",
-      "name": "Inventory Database",
-      "type": "postgresql",
-      "host": "localhost",
-      "port": 5432,
-      "database": "inventory_db",
-      "username": "postgres",
-      "password": "your_password",
-      "description": "Warehouse Inventory Management",
       "enabled": true
     }
   ],
@@ -205,227 +85,432 @@ When you click a node, the detail panel shows:
 }
 ```
 
-### Environment Variables (Optional)
+### Running
 
+#### Mode 1: Combined Server (REST API + UI Dashboard)
 ```bash
-# For OpenAI embeddings
-OPENAI_API_KEY=sk-...
+npm run start:combined
+```
+- **UI Dashboard**: http://localhost:5005
+- **REST API**: http://localhost:5005/api/*
+
+#### Mode 2: MCP Server Only (STDIO)
+```bash
+npm start
+```
+Berguna untuk integrate dengan AI tools lain (Zo Computer, Claude, dll)
+
+#### Mode 3: Scan All Databases
+```bash
+npm run scan-all
 ```
 
----
+## 📊 UI Dashboard Guide
 
-## Tools (MCP)
+### Graph View
+```
+┌─────────────────────────────────────────────────────────────┐
+│  DB Knowledge Graph                              [Search...] │
+├─────────────────────────────────────────────────────────────┤
+│  [Dropdown: Select Database ▼]  [Scan]  [Refresh]  [Layout] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│         ┌──────────────┐                                   │
+│         │ db_payroll   │ ← Database Node (Cyan)            │
+│         └──────┬───────┘                                   │
+│                │                                            │
+│         ┌──────┴───────┐                                   │
+│         │  employees   │ ← Table Node (Green)              │
+│         └──────┬───────┘                                   │
+│                │                                            │
+│    ┌───────────┼───────────┐                               │
+│    │           │           │                               │
+│ ┌──┴──┐   ┌───┴───┐   ┌───┴───┐                           │
+│ │ id  │   │name   │   │ dept  │ ← Column Nodes (Yellow)   │
+│ └──┬──┘   └───┬───┘   └───┬───┘                           │
+│    │         │           │                                 │
+│    └─────────┴───────────┘                                 │
+│    │                                           (Click node)  │
+│    └────────────► Shows detail panel ◄────────────         │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│ Legend: ● Database  ● Table  ● Column  ● Relationship      │
+└─────────────────────────────────────────────────────────────┘
+```
 
-DB Knowledge MCP menyediakan 8 tools untuk AI agents:
+### Node Colors
+| Type | Color | Description |
+|------|-------|-------------|
+| Database | Cyan (#00bcd4) | Root node untuk setiap database |
+| Table | Green (#4caf50) | Tabel dalam database |
+| Column | Yellow (#ffeb3b) | Kolom dalam tabel |
+| Relationship | Red (#f44336) | Foreign key relationship |
 
-### 1. `list_databases`
+### Using the UI
+
+1. **Select Database**: Gunakan dropdown untuk memilih database
+2. **Scan**: Klik "Scan" untuk scan database dan update knowledge base
+3. **Search**: Ketik di search bar untuk filter nodes
+4. **Click Node**: Klik node untuk melihat detail di panel kanan
+5. **Drag**: Drag node untuk reposisi
+6. **Zoom**: Scroll mouse untuk zoom in/out
+7. **Layout**: Klik "Layout" untuk auto-arrange graph
+
+### Detail Panel
+
+Ketika node diklik, panel kanan menampilkan:
+
+**Database Node:**
+```
+┌─────────────────────────┐
+│ 📊 db_payroll           │
+├─────────────────────────┤
+│ Type: SQL Server        │
+│ Tables: 25              │
+│ Columns: 156            │
+│ Last Updated: 2026-03  │
+├─────────────────────────┤
+│ [Scan] [Delete]         │
+└─────────────────────────┘
+```
+
+**Table Node:**
+```
+┌─────────────────────────┐
+│ 📋 employees           │
+├─────────────────────────┤
+│ Schema: dbo             │
+│ Columns: 12             │
+│ Row Count: 1,250        │
+├─────────────────────────┤
+│ Primary Keys:           │
+│   • employee_id         │
+├─────────────────────────┤
+│ Foreign Keys:            │
+│   • department_id →     │
+│     departments(id)     │
+├─────────────────────────┤
+│ [View Details]          │
+└─────────────────────────┘
+```
+
+**Column Node:**
+```
+┌─────────────────────────┐
+│ 📌 employee_id          │
+├─────────────────────────┤
+│ Type: int               │
+│ Nullable: No             │
+│ Primary Key: Yes        │
+│ Foreign Key: No         │
+├─────────────────────────┤
+│ Part of: employees      │
+└─────────────────────────┘
+```
+
+## 🔧 MCP Tools
+
+### 1. list_databases
 List semua database yang dikonfigurasi.
 
 ```json
-{}
+{
+  "name": "list_databases",
+  "description": "List all configured databases"
+}
 ```
 
-Returns: Array of databases dengan status knowledge base mereka.
-
-### 2. `scan_database`
-Scan database dan simpan schema ke knowledge base.
+### 2. scan_database
+Scan database dan simpan ke knowledge base.
 
 ```json
 {
-  "databaseId": "db_payroll",
-  "options": {
-    "tables": ["employees", "salaries"]  // optional filter
+  "name": "scan_database",
+  "arguments": {
+    "databaseId": "db_payroll"
   }
 }
 ```
 
-### 3. `search_knowledge`
-Pencarian semantic di knowledge base.
+### 3. search_knowledge
+Search knowledge base dengan query.
 
 ```json
 {
-  "query": "employee salary calculation",
-  "databaseId": "db_payroll",  // optional
-  "options": {
-    "limit": 10,
-    "minScore": 0.1,
-    "chunkTypes": ["table", "column"]
+  "name": "search_knowledge",
+  "arguments": {
+    "query": "employee salary",
+    "databaseId": "db_payroll",
+    "options": {
+      "limit": 10,
+      "minScore": 0.1
+    }
   }
 }
 ```
 
-### 4. `get_table_info`
-Get detailed information tentang sebuah table.
+### 4. get_table_info
+Get detail table.
 
 ```json
 {
-  "databaseId": "db_payroll",
-  "tableName": "employees",
-  "schema": "dbo"  // optional
+  "name": "get_table_info",
+  "arguments": {
+    "databaseId": "db_payroll",
+    "tableName": "employees",
+    "schema": "dbo"
+  }
 }
 ```
 
-### 5. `get_column_info`
-Get detailed information tentang sebuah column.
+### 5. get_column_info
+Get detail column.
 
 ```json
 {
-  "databaseId": "db_payroll",
-  "tableName": "employees",
-  "columnName": "salary"
+  "name": "get_column_info",
+  "arguments": {
+    "databaseId": "db_payroll",
+    "tableName": "employees",
+    "columnName": "salary"
+  }
 }
 ```
 
-### 6. `get_table_relationships`
-Get semua foreign key relationships untuk sebuah table.
+### 6. get_table_relationships
+Get semua foreign key relationships untuk table.
 
 ```json
 {
-  "databaseId": "db_payroll",
-  "tableName": "employees"
+  "name": "get_table_relationships",
+  "arguments": {
+    "databaseId": "db_payroll",
+    "tableName": "employees"
+  }
 }
 ```
 
-### 7. `get_database_overview`
+### 7. get_database_overview
 Get overview database termasuk semua tables.
 
 ```json
 {
-  "databaseId": "db_payroll"
+  "name": "get_database_overview",
+  "arguments": {
+    "databaseId": "db_payroll"
+  }
 }
 ```
 
-### 8. `delete_knowledge_base`
-Delete knowledge base untuk sebuah database.
+### 8. delete_knowledge_base
+Delete knowledge base untuk database.
 
 ```json
 {
-  "databaseId": "db_payroll"
+  "name": "delete_knowledge_base",
+  "arguments": {
+    "databaseId": "db_payroll"
+  }
 }
 ```
 
-### 9. `test_connection`
-Test koneksi ke database.
+## 🌐 REST API
 
-```json
-{
-  "databaseId": "db_payroll"
-}
+### Base URL
 ```
-
----
-
-## API Reference
-
-Server runs on **port 5005**.
+http://localhost:5005/api
+```
 
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/knowledge-bases` | List all knowledge bases |
-| GET | `/api/knowledge-bases/:id` | Get full knowledge base |
-| POST | `/api/scan/:databaseId` | Scan a database |
-| POST | `/api/scan-all` | Scan all enabled databases |
-
-### Examples
+#### GET /api/knowledge-bases
+List semua knowledge bases.
 
 ```bash
-# Health check
-curl http://localhost:5005/api/health
-
-# List knowledge bases
 curl http://localhost:5005/api/knowledge-bases
+```
 
-# Get full knowledge base
+#### GET /api/knowledge-bases/:id
+Get detail knowledge base.
+
+```bash
 curl http://localhost:5005/api/knowledge-bases/db_payroll
+```
 
-# Scan a database
+#### GET /api/knowledge-bases/:id/graph
+Get graph data untuk visualization.
+
+```bash
+curl http://localhost:5005/api/knowledge-bases/db_payroll/graph
+```
+
+Response:
+```json
+{
+  "nodes": [
+    { "id": "db_payroll", "label": "Payroll DB", "type": "database", "color": "#00bcd4" },
+    { "id": "employees", "label": "employees", "type": "table", "color": "#4caf50" },
+    { "id": "employee_id", "label": "employee_id", "type": "column", "color": "#ffeb3b" }
+  ],
+  "edges": [
+    { "from": "employees", "to": "employee_id", "label": "pk" }
+  ]
+}
+```
+
+#### GET /api/knowledge-bases/:id/search?q=query
+Search dalam knowledge base.
+
+```bash
+curl "http://localhost:5005/api/knowledge-bases/db_payroll/search?q=salary"
+```
+
+#### POST /api/scan/:databaseId
+Scan database.
+
+```bash
 curl -X POST http://localhost:5005/api/scan/db_payroll
+```
 
-# Scan all databases
+#### POST /api/scan-all
+Scan semua database.
+
+```bash
 curl -X POST http://localhost:5005/api/scan-all
 ```
 
----
+#### GET /api/databases
+List database configs.
 
-## Architecture
+```bash
+curl http://localhost:5005/api/databases
+```
 
-### Directory Structure
+#### POST /api/test-connection/:databaseId
+Test koneksi database.
+
+```bash
+curl -X POST http://localhost:5005/api/test-connection/db_payroll
+```
+
+#### GET /api/health
+Health check.
+
+```bash
+curl http://localhost:5005/api/health
+```
+
+## 📁 Project Structure
 
 ```
 db-knowledge-mcp/
 ├── config/
-│   └── databases.json        # Database configurations
-├── knowledgebases/           # Generated knowledge bases (JSON)
+│   └── databases.json       # Konfigurasi database
 ├── public/
 │   └── index.html           # UI Dashboard
 ├── src/
-│   ├── mcp-server.ts        # MCP stdio server
-│   ├── server.ts            # Express REST API + UI server
 │   ├── connectors/          # Database connectors
-│   │   ├── base.ts          # Abstract base class
+│   │   ├── base.ts          # Base connector class
 │   │   ├── sqlserver.ts     # SQL Server connector
 │   │   ├── mysql.ts         # MySQL connector
-│   │   └── postgresql.ts    # PostgreSQL connector
+│   │   ├── postgresql.ts    # PostgreSQL connector
+│   │   └── index.ts         # Factory function
 │   ├── embedder/
-│   │   └── schema-embedder.ts # Schema → Embeddings
-│   └── storage/
-│       └── vector-store.ts   # JSON-based vector store
+│   │   └── schema-embedder.ts  # Schema → Embeddings
+│   ├── storage/
+│   │   └── vector-store.ts  # JSON vector store
+│   ├── mcp-server.ts        # MCP stdio server
+│   └── server.ts            # Express + UI server
+├── knowledgebases/           # Generated KB storage
 ├── dist/                     # Compiled output
 ├── docs/
-│   └── API.md               # Detailed API docs
-├── package.json
-├── tsconfig.json
-└── README.md
+│   └── API.md              # Detailed API docs
+├── CLAUDE.md               # Developer guide
+├── README.md               # This file
+└── package.json
 ```
 
-### Knowledge Base Entities
+## 🔌 Database Support
 
-Untuk setiap database, 3 entitas knowledge dibuat:
+### SQL Server
+```json
+{
+  "id": "db_payroll",
+  "name": "Payroll DB",
+  "type": "sqlserver",
+  "host": "localhost",
+  "port": 1433,
+  "database": "payroll",
+  "username": "sa",
+  "password": "***"
+}
+```
 
-1. **Database Overview** (`database_overview`)
-   - Total tables, columns, relationships
-   - Database purpose dan description
+### MySQL
+```json
+{
+  "id": "db_hris",
+  "name": "HRIS DB",
+  "type": "mysql",
+  "host": "localhost",
+  "port": 3306,
+  "database": "hris",
+  "username": "root",
+  "password": "***"
+}
+```
 
-2. **Table Entity** (`table`)
-   - Table name, schema, description
-   - Column list dengan types
-   - Indexes dan primary keys
+### PostgreSQL
+```json
+{
+  "id": "db_analytics",
+  "name": "Analytics DB",
+  "type": "postgresql",
+  "host": "localhost",
+  "port": 5432,
+  "database": "analytics",
+  "username": "postgres",
+  "password": "***"
+}
+```
 
-3. **Column Entity** (`column`)
-   - Column name, data type, constraints
-   - NULLability, default values
-   - Foreign key relationships
+## 🔐 Security Notes
 
-4. **Relationship Entity** (`relationship`)
-   - Foreign key definitions
-   - Parent-child table relationships
+- **No credentials stored in code**: Semua credentials di `config/databases.json`
+- **Read-only access**: Connector hanya baca metadata, tidak write
+- **Local storage**: Knowledge base disimpan lokal, tidak dikirim ke cloud
+- **HTTPS-ready**: Bisa taruh di reverse proxy (nginx, Caddy) untuk production
 
----
+## 🛠️ Development
 
-## Development
-
+### Build
 ```bash
-# Build
 npm run build
-
-# Start MCP server (stdio mode)
-npm start
-
-# Start combined server (REST + UI)
-npm run start:combined
-
-# Scan all databases
-npm run scan-all
-
-# Watch mode (build on changes)
-npm run dev
 ```
 
----
+### Run Tests
+```bash
+npm test
+```
 
-## License
+### Lint
+```bash
+npm run lint
+```
 
-MIT License - PT Rebinmas 2026
+## 📝 License
+
+MIT License - lihat [LICENSE](LICENSE)
+
+## 🤝 Contributing
+
+1. Fork repository
+2. Buat branch baru (`git checkout -b feature/xxx`)
+3. Commit changes (`git commit -m 'Add feature xxx'`)
+4. Push ke branch (`git push origin feature/xxx`)
+5. Buat Pull Request
+
+## 📧 Contact
+
+- **Author**: attapangestu
+- **GitHub**: https://github.com/PTRJRepository/db-knowledge-mcp
